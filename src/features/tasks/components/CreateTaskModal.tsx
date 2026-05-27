@@ -8,10 +8,13 @@ import {
 } from "lucide-react";
 
 import Modal from "../../../components/Modal";
+import { mockInterns } from "../../../data/mockInterns";
+import type { Task } from "../../../types/task";
 
 interface CreateTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onCreateTask: (task: Task) => void;
 }
 
 interface TaskFormValues {
@@ -21,24 +24,10 @@ interface TaskFormValues {
   description: string;
 }
 
-const mockAssignees = [
-  {
-    id: "1",
-    name: "Nguyễn Thành Long",
-  },
-  {
-    id: "2",
-    name: "Hoàng Minh Phương",
-  },
-  {
-    id: "3",
-    name: "Trần Gia Bảo",
-  },
-];
-
 const CreateTaskModal = ({
   isOpen,
   onClose,
+  onCreateTask,
 }: CreateTaskModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -58,17 +47,23 @@ const CreateTaskModal = ({
 
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    const payload = {
+    const chosenIntern = mockInterns.find(
+      (intern) => intern.id === data.assigneeId
+    );
+
+    const newTask: Task = {
+      id: `task-${Date.now()}`,
       title: data.title,
-      assigneeId: data.assigneeId,
-      dueDate: data.dueDate
-        ? new Date(data.dueDate).toISOString()
-        : "",
       description: data.description,
-      files,
+      assigneeId: data.assigneeId || undefined,
+      assigneeName: chosenIntern?.fullName,
+      dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : undefined,
+      rawStatus: "TODO",
+      displayStatus: data.assigneeId ? "IN_PROGRESS" : "UNASSIGNED",
+      attachments: files.map((file) => file.name),
     };
 
-    console.log(payload);
+    onCreateTask(newTask);
 
     setIsSubmitting(false);
 
@@ -147,12 +142,12 @@ const CreateTaskModal = ({
                   Chọn thành viên phụ trách...
                 </option>
 
-                {mockAssignees.map((assignee) => (
+                {mockInterns.map((intern) => (
                   <option
-                    key={assignee.id}
-                    value={assignee.id}
+                    key={intern.id}
+                    value={intern.id}
                   >
-                    {assignee.name}
+                    {intern.fullName}
                   </option>
                 ))}
               </select>
@@ -166,14 +161,21 @@ const CreateTaskModal = ({
 
             <div>
               <label className="mb-3 block text-sm font-bold uppercase tracking-wider text-gray-500">
-                Hạn chót
+                Hạn chót <span className="text-red-500">*</span>
               </label>
 
               <div className="relative">
                 <input
                   type="date"
-                  {...register("dueDate")}
-                  className="w-full rounded-xl border border-gray-200 px-5 py-4 outline-none transition focus:border-black"
+                  {...register("dueDate", {
+                    required: "Vui lòng chọn ngày hạn chót",
+                  })}
+                  min={new Date().toISOString().split("T")[0]}
+                  className={`w-full rounded-xl border px-5 py-4 outline-none transition ${
+                    errors.dueDate
+                      ? "border-red-500"
+                      : "border-gray-200 focus:border-black"
+                  }`}
                 />
 
                 <CalendarDays
@@ -181,6 +183,12 @@ const CreateTaskModal = ({
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
                 />
               </div>
+
+              {errors.dueDate && (
+                <p className="mt-2 text-sm text-red-500">
+                  {errors.dueDate.message}
+                </p>
+              )}
             </div>
           </div>
 
@@ -212,12 +220,29 @@ const CreateTaskModal = ({
                 </span>
               </div>
 
-              {files.length > 0 && (
+              {files.length > 0 ? (
                 <div className="text-sm text-slate-500">
-                  Đã chọn {files.length} file
+                  {files.length} file đã chọn
+                </div>
+              ) : (
+                <div className="text-sm text-slate-500">
+                  Chọn tệp để đính kèm
                 </div>
               )}
             </button>
+
+            {files.length > 0 && (
+              <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm text-slate-700">
+                <p className="mb-2 font-semibold">Tên tệp đã chọn</p>
+                <ul className="space-y-2">
+                  {files.map((file) => (
+                    <li key={file.name} className="break-words">
+                      • {file.name}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             <input
               ref={fileInputRef}

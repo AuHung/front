@@ -6,23 +6,77 @@ import DataTable from "../components/DataTable";
 import FloatingButton from "../components/FloatingButton";
 
 import CreateTaskModal from "../features/tasks/components/CreateTaskModal";
+import KanbanBoard from "../features/tasks/components/KanbanBoard";
+import type { Task } from "../types/task";
+import { mockTasks } from "../data/mockTasks";
 
 const Dashboard = () => {
   const [isOpenModal, setIsOpenModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<"overview" | "list">("overview");
+  const [tasks, setTasks] = useState<Task[]>(mockTasks);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5]">
-      <Sidebar />
+    <div className={`min-h-screen transition-colors duration-300 ${
+      theme === "dark" ? "bg-blue-950 text-slate-100" : "bg-[#f5f5f5] text-black"
+    }`}>
+      <Sidebar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        theme={theme}
+        onThemeToggle={() =>
+          setTheme((current) => (current === "light" ? "dark" : "light"))
+        }
+      />
 
-      <Header />
+      <Header theme={theme} />
 
       <main className="ml-[260px] pt-[100px]">
         <div className="p-10">
-          <h1 className="mb-10 text-6xl font-black">
-            Danh sách Thực tập sinh
-          </h1>
+          {activeTab === "overview" ? (
+            <section>
+              <h1 className="mb-8 text-6xl font-black">Tiến độ công việc</h1>
+              <KanbanBoard
+                tasks={tasks}
+                onStatusChange={(taskId, newStatus) => {
+                  setTasks((currentTasks) =>
+                    currentTasks.map((task) => {
+                      if (task.id !== taskId) return task;
 
-          <DataTable page={1} limit={5} />
+                      const isOverdue =
+                        task.dueDate && new Date(task.dueDate) < new Date();
+
+                      const newDisplayStatus: Task["displayStatus"] =
+                        newStatus === "TODO"
+                          ? task.assigneeId
+                            ? "IN_PROGRESS"
+                            : "UNASSIGNED"
+                          : newStatus === "IN_PROGRESS"
+                          ? isOverdue
+                            ? "OVERDUE"
+                            : "IN_PROGRESS"
+                          : newStatus === "IN_REVIEW"
+                          ? task.rejectedCount && task.rejectedCount > 0
+                            ? "NEEDS_REVISION"
+                            : "WAITING_REVIEW"
+                          : "COMPLETED";
+
+                      return {
+                        ...task,
+                        rawStatus: newStatus,
+                        displayStatus: newDisplayStatus,
+                      };
+                    })
+                  );
+                }}
+              />
+            </section>
+          ) : (
+            <section>
+              <h1 className="mb-8 text-6xl font-black">Danh sách Thực tập sinh</h1>
+              <DataTable page={1} limit={5} />
+            </section>
+          )}
         </div>
       </main>
 
@@ -33,6 +87,7 @@ const Dashboard = () => {
       <CreateTaskModal
         isOpen={isOpenModal}
         onClose={() => setIsOpenModal(false)}
+        onCreateTask={(task) => setTasks((current) => [task, ...current])}
       />
     </div>
   );
