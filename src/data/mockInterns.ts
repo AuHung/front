@@ -1,6 +1,7 @@
 import type { Intern } from "../types/intern";
 import { InternStatus } from "../types/intern";
 
+//Test Jestjs ở đây
 export const mockInterns: Intern[] = [
   {
     id: "1",

@@ -1,4 +1,12 @@
-import { useKanban, columns, displayStatusLabels, displayStatusStyles, getColumnTasks, getActionLabel, formatDueDate } from "../hooks/useKanban";
+import {
+  useKanban,
+  columns,
+  displayStatusLabels,
+  displayStatusStyles,
+  getColumnTasks,
+  getActionLabel,
+  formatDueDate,
+} from "../hooks/useKanban";
 import { CalendarDays } from "lucide-react";
 import Modal from "../../../components/Modal";
 import type { Task, RawTaskStatus } from "../../../types/task";
@@ -26,9 +34,7 @@ const KanbanBoard = ({ tasks, onStatusChange }: KanbanBoardProps) => {
             <p className="text-sm uppercase tracking-[0.35em] text-gray-500">
               Tiến độ công việc
             </p>
-            <h1 className="mt-2 text-4xl font-black">
-              Kanban Board Mentor
-            </h1>
+            <h1 className="mt-2 text-4xl font-black">Kanban Board Mentor</h1>
             <p className="mt-2 text-sm text-gray-600">
               Kéo thả task giữa các cột để thay đổi trạng thái.
             </p>
@@ -49,7 +55,9 @@ const KanbanBoard = ({ tasks, onStatusChange }: KanbanBoardProps) => {
             onDragEnter={() => setDragOverColumn(column.rawStatus)}
             onDragLeave={() => setDragOverColumn(null)}
             className={`rounded-3xl border bg-white p-6 shadow-sm transition-all duration-200 ${
-              dragOverColumn === column.rawStatus ? "border-blue-500 bg-blue-50" : "border-slate-200"
+              dragOverColumn === column.rawStatus
+                ? "border-blue-500 bg-blue-50"
+                : "border-slate-200"
             }`}
           >
             <div className="mb-6 flex items-center justify-between">
@@ -86,7 +94,9 @@ const KanbanBoard = ({ tasks, onStatusChange }: KanbanBoardProps) => {
 
                   <div className="space-y-2 text-sm text-gray-600">
                     <div>
-                      <span className="font-semibold text-gray-900">Người nhận: </span>
+                      <span className="font-semibold text-gray-900">
+                        Người nhận:{" "}
+                      </span>
                       {task.assigneeName || "Chưa gán"}
                     </div>
 
@@ -120,6 +130,7 @@ const KanbanBoard = ({ tasks, onStatusChange }: KanbanBoardProps) => {
         isOpen={Boolean(selectedTask)}
         onClose={() => setSelectedTask(null)}
       >
+        {/* // Hiển thị chi tiết task khi có task được chọn */}
         {selectedTask && (
           <div className="p-10">
             <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -161,16 +172,17 @@ const KanbanBoard = ({ tasks, onStatusChange }: KanbanBoardProps) => {
                   </div>
                 )}
 
-                {selectedTask.rejectedCount && selectedTask.rejectedCount > 0 && (
-                  <div>
-                    <p className="text-sm uppercase tracking-[0.35em] text-gray-500">
-                      Lần bị trả lại
-                    </p>
-                    <p className="mt-2 text-lg text-orange-700">
-                      {selectedTask.rejectedCount} lần
-                    </p>
-                  </div>
-                )}
+                {selectedTask.rejectedCount &&
+                  selectedTask.rejectedCount > 0 && (
+                    <div>
+                      <p className="text-sm uppercase tracking-[0.35em] text-gray-500">
+                        Lần bị trả lại
+                      </p>
+                      <p className="mt-2 text-lg text-orange-700">
+                        {selectedTask.rejectedCount} lần
+                      </p>
+                    </div>
+                  )}
               </div>
 
               <div className="space-y-4 rounded-3xl border border-gray-200 bg-slate-50 p-6">
@@ -183,20 +195,21 @@ const KanbanBoard = ({ tasks, onStatusChange }: KanbanBoardProps) => {
                   </p>
                 </div>
 
-                {selectedTask.attachments && selectedTask.attachments.length > 0 && (
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                    <p className="mb-2 text-sm uppercase tracking-[0.35em] text-gray-500">
-                      File đính kèm
-                    </p>
-                    <ul className="space-y-2 text-sm text-gray-700">
-                      {selectedTask.attachments.map((attachment) => (
-                        <li key={attachment} className="break-words">
-                          • {attachment}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                {selectedTask.attachments &&
+                  selectedTask.attachments.length > 0 && (
+                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="mb-2 text-sm uppercase tracking-[0.35em] text-gray-500">
+                        File đính kèm
+                      </p>
+                      <ul className="space-y-2 text-sm text-gray-700">
+                        {selectedTask.attachments.map((attachment) => (
+                          <li key={attachment} className="break-words">
+                            • {attachment}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
                 <div className="rounded-3xl bg-white p-5 shadow-sm">
                   <p className="text-sm uppercase tracking-[0.35em] text-gray-500">
@@ -206,13 +219,14 @@ const KanbanBoard = ({ tasks, onStatusChange }: KanbanBoardProps) => {
                     {getActionLabel(selectedTask)}
                   </p>
                   <div className="mt-4 rounded-2xl bg-gray-100 px-4 py-3 text-sm text-gray-600">
-                    {selectedTask.rawStatus === "TODO" && !selectedTask.assigneeId
+                    {selectedTask.rawStatus === "TODO" &&
+                    !selectedTask.assigneeId
                       ? "Mentor có thể mở luồng gán Intern nếu cần."
                       : selectedTask.rawStatus === "IN_REVIEW"
-                      ? "Mentor có thể mở màn hình review task này."
-                      : selectedTask.rawStatus === "DONE"
-                      ? "Chỉ xem được kết quả, không đổi trạng thái trực tiếp."
-                      : "Xem chi tiết task."}
+                        ? "Mentor có thể mở màn hình review task này."
+                        : selectedTask.rawStatus === "DONE"
+                          ? "Chỉ xem được kết quả, không đổi trạng thái trực tiếp."
+                          : "Xem chi tiết task."}
                   </div>
                 </div>
               </div>

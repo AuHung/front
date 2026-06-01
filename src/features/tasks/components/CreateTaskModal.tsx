@@ -1,11 +1,6 @@
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import {
-  CalendarDays,
-  Image,
-  LoaderCircle,
-  Paperclip,
-} from "lucide-react";
+import { CalendarDays, Image, LoaderCircle, Paperclip } from "lucide-react"; //icon react
 
 import Modal from "../../../components/Modal";
 import { mockInterns } from "../../../data/mockInterns";
@@ -48,7 +43,7 @@ const CreateTaskModal = ({
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
     const chosenIntern = mockInterns.find(
-      (intern) => intern.id === data.assigneeId
+      (intern) => intern.id === data.assigneeId,
     );
 
     const newTask: Task = {
@@ -76,9 +71,7 @@ const CreateTaskModal = ({
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(event.target.files || []);
 
     setFiles(selectedFiles);
@@ -88,9 +81,7 @@ const CreateTaskModal = ({
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className="flex flex-col">
         <div className="border-b px-10 py-8">
-          <h2 className="text-4xl font-black uppercase">
-            Tạo công việc mới
-          </h2>
+          <h2 className="text-4xl font-black uppercase">Tạo công việc mới</h2>
         </div>
 
         <form
@@ -138,15 +129,10 @@ const CreateTaskModal = ({
                     : "border-gray-200 focus:border-black"
                 }`}
               >
-                <option value="">
-                  Chọn thành viên phụ trách...
-                </option>
+                <option value="">Chọn thành viên phụ trách...</option>
 
                 {mockInterns.map((intern) => (
-                  <option
-                    key={intern.id}
-                    value={intern.id}
-                  >
+                  <option key={intern.id} value={intern.id}>
                     {intern.fullName}
                   </option>
                 ))}
@@ -269,10 +255,7 @@ const CreateTaskModal = ({
             >
               {isSubmitting ? (
                 <>
-                  <LoaderCircle
-                    size={20}
-                    className="animate-spin"
-                  />
+                  <LoaderCircle size={20} className="animate-spin" />
                   Loading...
                 </>
               ) : (

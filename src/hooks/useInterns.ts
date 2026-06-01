@@ -17,7 +17,7 @@ export const useInterns = ({ page, limit }: UseInternsParams) => {
     const timeout = setTimeout(() => {
       const start = (page - 1) * limit;
       const end = start + limit;
-
+         
       setData(mockInterns.slice(start, end));
       setIsLoading(false);
     }, 1200);

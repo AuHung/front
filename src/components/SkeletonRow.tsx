@@ -4,9 +4,9 @@ const SkeletonRow = () => {
       {Array.from({ length: 5 }).map((_, index) => (
         <td key={index} className="px-6 py-6">
           <div className="h-6 w-full animate-pulse rounded bg-gray-200" />
-        </td>
+        </td> // dữ liệu
       ))}
-    </tr>
+    </tr> // một hàng
   );
 };
 

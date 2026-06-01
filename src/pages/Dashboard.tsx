@@ -80,9 +80,11 @@ const Dashboard = () => {
         </div>
       </main>
 
-      <FloatingButton
+       <FloatingButton
         onClick={() => setIsOpenModal(true)}
-      />
+      /> 
+       {/*Nút plus, hay dấu cộng  */}
+
 
       <CreateTaskModal
         isOpen={isOpenModal}
