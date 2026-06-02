@@ -69,6 +69,45 @@ const Dashboard = () => {
                     })
                   );
                 }}
+                onUpdateTask={(taskId, updates) => {
+                  setTasks((currentTasks) =>
+                    currentTasks.map((task) => {
+                      if (task.id !== taskId) return task;
+
+                            const dueDate = updates.dueDate ?? task.dueDate;
+                      const isOverdue = dueDate ? new Date(dueDate) < new Date() : false;
+
+                      // If assigning to someone, move to IN_PROGRESS
+                      const newRawStatus = updates.assigneeId && !task.assigneeId
+                        ? "IN_PROGRESS"
+                        : task.rawStatus;
+
+                      const newDisplayStatus: Task["displayStatus"] =
+                        updates.assigneeId && !task.assigneeId
+                          ? isOverdue
+                            ? "OVERDUE"
+                            : "IN_PROGRESS"
+                          : task.displayStatus;
+
+                      return {
+                        ...task,
+                        assigneeName: updates.assigneeName ?? task.assigneeName,
+                        assigneeId: updates.assigneeId ?? task.assigneeId,
+                        dueDate: updates.dueDate ?? task.dueDate,
+                        rawStatus: newRawStatus,
+                        displayStatus: newDisplayStatus,
+                        title: updates.title ?? task.title,
+                        description: updates.description ?? task.description,
+                        attachments: updates.attachments ?? task.attachments,
+                      };
+                    })
+                  );
+                }}
+                onDeleteTask={(taskId) => {
+                  setTasks((currentTasks) =>
+                    currentTasks.filter((task) => task.id !== taskId),
+                  );
+                }}
               />
             </section>
           ) : (

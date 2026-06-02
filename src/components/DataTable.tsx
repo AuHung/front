@@ -6,6 +6,7 @@ import Modal from "./Modal";
 import SkeletonRow from "./SkeletonRow";
 import { InternStatus, type Intern } from "../types/intern";
 import { useInterns } from "../hooks/useInterns";
+import { getInternDetails } from "../data/internDetails";
 
 interface DataTableProps {
   page: number;
@@ -23,21 +24,10 @@ const DataTable = ({ page, limit }: DataTableProps) => {
   const openReviewModal = () => setIsReviewOpen(true);
   const closeReviewModal = () => setIsReviewOpen(false);
 
-  const taskStats = selectedIntern
-    ? [
-        { label: "Tổng task", value: "12" },
-        { label: "Hoàn thành", value: "10" },
-        { label: "Trễ hạn", value: "2" },
-      ]
-    : [];
+  const internDetailsData = selectedIntern ? getInternDetails(selectedIntern.id) : null;
+  const taskStats = internDetailsData?.taskStats || [];
+  const workHistory = internDetailsData?.workHistory || [];
 
-  const workHistory = selectedIntern
-    ? [
-        { title: "Thiết kế UI Dashboard", date: "24/10/2026", status: "HOÀN THÀNH" },
-        { title: "Kiểm tra API Login", date: "20/10/2026", status: "TRỄ HẠN" },
-        { title: "Nghiên cứu vật liệu mới", date: "18/10/2026", status: "HOÀN THÀNH" },
-      ]
-    : [];
 
   return (
     <div className="overflow-hidden rounded-3xl border bg-white shadow-sm">

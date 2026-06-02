@@ -26,8 +26,15 @@ export const displayStatusStyles: Record<DisplayTaskStatus, string> = {
   OVERDUE: "bg-red-100 text-red-800",
 };
 
-export const getColumnTasks = (status: RawTaskStatus, tasks: Task[]) =>
-  tasks.filter((task) => task.rawStatus === status);
+export const getColumnTasks = (status: RawTaskStatus, tasks: Task[]) => {
+  const filtered = tasks.filter((task) => task.rawStatus === status);
+
+  if (status === "TODO") {
+    return filtered.filter((task) => !task.assigneeId && !task.dueDate);
+  }
+
+  return filtered;
+};
 
 export const getActionLabel = (task: Task) => {
   if (task.rawStatus === "TODO") {

@@ -4,27 +4,98 @@ import {
   displayStatusLabels,
   displayStatusStyles,
   getColumnTasks,
-  getActionLabel,
   formatDueDate,
 } from "../hooks/useKanban";
 import { CalendarDays } from "lucide-react";
 import Modal from "../../../components/Modal";
+import EditTaskModal from "./EditTaskModal";
 import type { Task, RawTaskStatus } from "../../../types/task";
+import { useState, type DragEvent } from "react";
 
 interface KanbanBoardProps {
   tasks: Task[];
   onStatusChange: (taskId: string, newStatus: RawTaskStatus) => void;
+  onUpdateTask?: (
+    taskId: string,
+    updates: {
+      title?: string;
+      description?: string;
+      assigneeId?: string;
+      assigneeName?: string;
+      dueDate?: string;
+      attachments?: string[];
+    },
+  ) => void;
+  onDeleteTask?: (taskId: string) => void;
 }
 
-const KanbanBoard = ({ tasks, onStatusChange }: KanbanBoardProps) => {
+const KanbanBoard = ({ tasks, onStatusChange, onUpdateTask, onDeleteTask }: KanbanBoardProps) => {
   const {
     selectedTask,
     setSelectedTask,
     dragOverColumn,
     setDragOverColumn,
-    handleDragStart,
-    handleDrop,
+    handleDragStart: internalHandleDragStart,
   } = useKanban(onStatusChange);
+
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
+
+  const handleCloseModal = () => {
+    setSelectedTask(null);
+  };
+
+  const canDropToColumn = (targetStatus: RawTaskStatus) => {
+    if (targetStatus === "TODO" && draggedTaskId) {
+      const draggedTask = tasks.find((task) => task.id === draggedTaskId);
+      return draggedTask?.rawStatus === "TODO";
+    }
+    return true;
+  };
+
+  const handleDragStart = (event: DragEvent<HTMLButtonElement>, taskId: string) => {
+    setDraggedTaskId(taskId);
+    internalHandleDragStart(event, taskId);
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>, status: RawTaskStatus) => {
+    event.preventDefault();
+    const taskId = event.dataTransfer.getData("text/plain");
+    const draggedTask = tasks.find((task) => task.id === taskId);
+
+    setDragOverColumn(null);
+    setDraggedTaskId(null);
+
+    if (!taskId || !draggedTask) {
+      return;
+    }
+
+    if (status === "TODO" && draggedTask.rawStatus !== "TODO") {
+      return;
+    }
+
+    onStatusChange(taskId, status);
+  };
+
+  const handleSave = (updates: {
+    title?: string;
+    description?: string;
+    assigneeId?: string;
+    assigneeName?: string;
+    dueDate?: string;
+    attachments?: string[];
+  }) => {
+    if (selectedTask && onUpdateTask) {
+      onUpdateTask(selectedTask.id, updates);
+    }
+    handleCloseModal();
+  };
+
+  const handleDelete = () => {
+    if (selectedTask && onDeleteTask) {
+      onDeleteTask(selectedTask.id);
+    }
+    handleCloseModal();
+  };
 
   return (
     <div className="space-y-8">
@@ -52,7 +123,11 @@ const KanbanBoard = ({ tasks, onStatusChange }: KanbanBoardProps) => {
             key={column.rawStatus}
             onDragOver={(event) => event.preventDefault()}
             onDrop={(event) => handleDrop(event, column.rawStatus)}
-            onDragEnter={() => setDragOverColumn(column.rawStatus)}
+            onDragEnter={() => {
+              if (canDropToColumn(column.rawStatus)) {
+                setDragOverColumn(column.rawStatus);
+              }
+            }}
             onDragLeave={() => setDragOverColumn(null)}
             className={`rounded-3xl border bg-white p-6 shadow-sm transition-all duration-200 ${
               dragOverColumn === column.rawStatus
@@ -78,6 +153,10 @@ const KanbanBoard = ({ tasks, onStatusChange }: KanbanBoardProps) => {
                   type="button"
                   draggable
                   onDragStart={(event) => handleDragStart(event, task.id)}
+                  onDragEnd={() => {
+                    setDraggedTaskId(null);
+                    setDragOverColumn(null);
+                  }}
                   onClick={() => setSelectedTask(task)}
                   className="w-full rounded-3xl border border-gray-200 bg-white p-5 text-left shadow-sm transition hover:border-black hover:bg-gray-50"
                 >
@@ -126,112 +205,14 @@ const KanbanBoard = ({ tasks, onStatusChange }: KanbanBoardProps) => {
         ))}
       </div>
 
-      <Modal
-        isOpen={Boolean(selectedTask)}
-        onClose={() => setSelectedTask(null)}
-      >
-        {/* // Hiển thị chi tiết task khi có task được chọn */}
+      <Modal isOpen={Boolean(selectedTask)} onClose={handleCloseModal}>
         {selectedTask && (
-          <div className="p-10">
-            <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm uppercase tracking-[0.35em] text-gray-500">
-                  Task detail
-                </p>
-                <h2 className="mt-2 text-3xl font-black text-gray-900">
-                  {selectedTask.title}
-                </h2>
-              </div>
-
-              <span
-                className={`rounded-full px-4 py-2 text-sm font-semibold ${displayStatusStyles[selectedTask.displayStatus]}`}
-              >
-                {displayStatusLabels[selectedTask.displayStatus]}
-              </span>
-            </div>
-
-            <div className="grid gap-6 lg:grid-cols-2">
-              <div className="space-y-4 rounded-3xl border border-gray-200 bg-slate-50 p-6">
-                <div>
-                  <p className="text-sm uppercase tracking-[0.35em] text-gray-500">
-                    Người nhận
-                  </p>
-                  <p className="mt-2 text-lg font-bold text-gray-900">
-                    {selectedTask.assigneeName || "Chưa gán"}
-                  </p>
-                </div>
-
-                {selectedTask.dueDate && (
-                  <div>
-                    <p className="text-sm uppercase tracking-[0.35em] text-gray-500">
-                      Hạn chót
-                    </p>
-                    <p className="mt-2 text-lg text-gray-900">
-                      {formatDueDate(selectedTask.dueDate)}
-                    </p>
-                  </div>
-                )}
-
-                {selectedTask.rejectedCount &&
-                  selectedTask.rejectedCount > 0 && (
-                    <div>
-                      <p className="text-sm uppercase tracking-[0.35em] text-gray-500">
-                        Lần bị trả lại
-                      </p>
-                      <p className="mt-2 text-lg text-orange-700">
-                        {selectedTask.rejectedCount} lần
-                      </p>
-                    </div>
-                  )}
-              </div>
-
-              <div className="space-y-4 rounded-3xl border border-gray-200 bg-slate-50 p-6">
-                <div>
-                  <p className="text-sm uppercase tracking-[0.35em] text-gray-500">
-                    Mô tả
-                  </p>
-                  <p className="mt-2 text-gray-700">
-                    {selectedTask.description}
-                  </p>
-                </div>
-
-                {selectedTask.attachments &&
-                  selectedTask.attachments.length > 0 && (
-                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                      <p className="mb-2 text-sm uppercase tracking-[0.35em] text-gray-500">
-                        File đính kèm
-                      </p>
-                      <ul className="space-y-2 text-sm text-gray-700">
-                        {selectedTask.attachments.map((attachment) => (
-                          <li key={attachment} className="break-words">
-                            • {attachment}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                <div className="rounded-3xl bg-white p-5 shadow-sm">
-                  <p className="text-sm uppercase tracking-[0.35em] text-gray-500">
-                    Hành động
-                  </p>
-                  <p className="mt-3 text-base text-gray-700">
-                    {getActionLabel(selectedTask)}
-                  </p>
-                  <div className="mt-4 rounded-2xl bg-gray-100 px-4 py-3 text-sm text-gray-600">
-                    {selectedTask.rawStatus === "TODO" &&
-                    !selectedTask.assigneeId
-                      ? "Mentor có thể mở luồng gán Intern nếu cần."
-                      : selectedTask.rawStatus === "IN_REVIEW"
-                        ? "Mentor có thể mở màn hình review task này."
-                        : selectedTask.rawStatus === "DONE"
-                          ? "Chỉ xem được kết quả, không đổi trạng thái trực tiếp."
-                          : "Xem chi tiết task."}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <EditTaskModal
+            task={selectedTask}
+            onCancel={handleCloseModal}
+            onDelete={handleDelete}
+            onSave={handleSave}
+          />
         )}
       </Modal>
     </div>
